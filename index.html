@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>bob - Smart Ride Comparison</title>
+    <style>
+        :root {
+            --primary: #ffffff;
+            --background: #0a0a0a;
+            --accent: #00ffff;
+            --text: #ffffff;
+            --text-muted: #a0a0a0;
+            --sidebar-width: 300px;
+            --header-height: 70px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background);
+            color: var(--text);
+            overflow-x: hidden;
+            transition: background-color 0.3s ease;
+        }
+
+        .custom-cursor {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            transition: transform 0.2s ease;
+        }
+
+        /* Header Styles */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--header-height);
+            background: rgba(13, 17, 23, 0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+            z-index: 1000;
+            transition: background-color 0.3s ease;
+        }
+
+        .logo {
+            height: 40px;
+            transition: transform 0.3s ease;
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
+        }
+
+        .nav-desktop {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-desktop a {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease, transform 0.3s ease;
+            position: relative;
+        }
+
+        .nav-desktop a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--accent);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .nav-desktop a:hover {
+            color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .nav-desktop a:hover::after {
+            transform: scaleX(1);
+        }
+
+        .download-btn {
+            background: linear-gradient(45deg, #00ffff, #4D9FFF);
+            color: var(--primary);
+            padding: 0.5rem 1.5rem;
+            border-radius: 25px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .download-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+        }
+
+        .menu-toggle {
+            display: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .menu-toggle:hover {
+            color: var(--accent);
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 300px;
+            height: 100vh;
+            background: rgba(22, 27, 34, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            transition: transform 0.3s ease;
+            z-index: 1001;
+            overflow-y: auto;
+        }
+
+        .sidebar.active {
+            transform: translateX(-300px);
+        }
+
+        .sidebar-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: color 0.3s ease;
+        }
+
+        .sidebar-close:hover {
+            color: var(--accent);
+        }
+
+        .sidebar-nav {
+            margin-top: 3rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .sidebar-nav a {
+            color: var(--text);
+            text-decoration: none;
+            font-size: 1.2rem;
+            padding: 0.5rem 0;
+            transition: color 0.3s ease, transform 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+
+        .sidebar-nav a:hover {
+            color: var(--accent);
+            transform: translateX(5px);
+        }
+
+        .sidebar-nav a svg {
+            margin-right: 10px;
+        }
+
+        /* Hero Section Styles */
+        .hero {
+            min-height: 100vh;
+            padding-top: var(--header-height);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, var(--accent), #4D9FFF);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .hero p {
+            font-size: clamp(1rem, 2vw, 1.5rem);
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            animation: fadeInUp 1s ease-out 0.2s both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            animation: fadeInUp 1s ease-out 0.4s both;
+        }
+
+        .cta-buttons button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .cta-buttons button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        }
+
+        .primary-btn {
+            background: linear-gradient(45deg, var(--accent), #4D9FFF);
+            color: var(--primary);
+        }
+
+        .secondary-btn {
+            background-color: transparent;
+            border: 2px solid var(--accent);
+            color: var(--accent);
+        }
+
+        /* Vehicle Animation Styles */
+        .vehicles-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40vh;
+            perspective: 1000px;
+            transform-style: preserve-3d;
+            z-index: 1;
+        }
+
+        .vehicle {
+            position: absolute;
+            font-size: 2rem;
+            animation: moveVehicle 20s linear infinite;
+            transform-style: preserve-3d;
+        }
+
+        @keyframes moveVehicle {
+            0% {
+                transform: translateX(-100%) translateZ(0) rotateY(0deg);
+            }
+            100% {
+                transform: translateX(100vw) translateZ(0) rotateY(0deg);
+            }
+        }
+
+        .grid-floor {
+            position: absolute;
+            bottom: 0;
+            left: -50%;
+            right: -50%;
+            height: 40vh;
+            background: linear-gradient(to bottom, transparent, rgba(0, 255, 255, 0.1));
+            transform: perspective(1000px) rotateX(60deg);
+            background-size: 50px 50px;
+            background-image:
+                linear-gradient(to right, rgba(0, 255, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0, 255, 255, 0.1) 1px, transparent 1px);
+            animation: moveGrid 20s linear infinite;
+        }
+
+        @keyframes moveGrid {
+            0% {
+                background-position: 0 0;
+            }
+            100% {
+                background-position: 50px 50px;
+            }
+        }
+
+        /* Floating Elements */
+        .floating-elements {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .floating-element {
+            position: absolute;
+            background-color: rgba(0, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            25% { transform: translate(50px, 50px); }
+            50% { transform: translate(100px, -50px); }
+            75% { transform: translate(-50px, 50px); }
+        }
+
+        /* Features Section */
+        .features {
+            padding: 5rem 2rem;
+            background: linear-gradient(to bottom, var(--background), var(--background));
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 3rem;
+            background: linear-gradient(45deg, var(--accent), #4D9FFF);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 255, 255, 0.1);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--accent);
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+        }
+
+        /* How It Works Section */
+        .how-it-works {
+            padding: 5rem 2rem;
+            background: linear-gradient(to bottom, var(--background), var(--background));
+        }
+
+        .steps-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .step-card {
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .step-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 255, 255, 0.1);
+        }
+
+        .step-number {
+            font-size: 4rem;
+            font-weight: 700;
+            color: rgba(0, 255, 255, 0.1);
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 0;
+        }
+
+        .step-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-card p {
+            color: var(--text-muted);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Stats Section */
+        .stats {
+            padding: 5rem 2rem;
+            background: linear-gradient(45deg, var(--background), var(--background));
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 255, 255, 0.1);
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+
+        .stat-card p {
+            color: var(--text-muted);
+        }
+
+        /* Partners Section */
+        .partners {
+            padding: 5rem 2rem;
+            background: linear-gradient(to bottom, var(--background), var(--background));
+        }
+
+        .partners-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .partner-logo {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .partner-logo:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 20px rgba(0, 255, 255, 0.1);
+        }
+
+        .partner-logo img {
+            max-width: 100%;
+            max-height: 60px;
+            filter: grayscale(100%) brightness(200%);
+            transition: filter 0.3s ease;
+        }
+
+        .partner-logo:hover img {
+            filter: grayscale(0%) brightness(100%);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--background);
+            padding: 5rem 2rem 2rem;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-column h3 {
+            color: var(--accent);
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column ul li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-column ul li a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-column ul li a:hover {
+            color: var(--accent);
+        }
+
+        .newsletter-form {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .newsletter-form input {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text);
+            flex-grow: 1;
+        }
+
+        .newsletter-form button {
+            padding: 0.5rem 1.5rem;
+            border: none;
+            border-radius: 25px;
+            background: var(--accent);
+            color: var(--background);
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .newsletter-form button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+        }
+
+        /* Mobile Styles */
+        @media (max-width: 768px) {
+            .nav-desktop {
+                display: none;
+            }
+
+            .menu-toggle {
+                display: block;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .features-grid,
+            .steps-container,
+            .stats-grid,
+            .partners-grid,
+            .footer-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .vehicle {
+                font-size: 1.5rem;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+            }
+        }
+
+        /* Dark Mode Toggle */
+        .dark-mode-toggle {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1000;
+            transition: background-color 0.3s ease;
+        }
+
+        .dark-mode-toggle:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .dark-mode-toggle svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--text);
+            transition: transform 0.3s ease;
+        }
+
+        .dark-mode-toggle:hover svg {
+            transform: rotate(360deg);
+        }
+
+        /* Light Mode Styles */
+        body.light-mode {
+            --background: #ffffff;
+            --text: #0D1117;
+            --text-muted: rgba(13, 17, 23, 0.7);
+        }
+
+        body.light-mode .feature-card,
+        body.light-mode .stat-card,
+        body.light-mode .step-card,
+        body.light-mode .partner-logo {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        body.light-mode header {
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        body.light-mode .sidebar {
+            background: rgba(240, 240, 240, 0.95);
+        }
+
+        body.light-mode .grid-floor {
+            background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.1));
+        }
+
+        /* Loading Animation */
+        .loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--background);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            transition: opacity 0.5s ease;
+        }
+
+        .loader.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loader-content {
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--accent);
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Scroll to Top Button */
+        .scroll-to-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 6rem;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1000;
+            transition: background-color 0.3s ease, opacity 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .scroll-to-top.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .scroll-to-top:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .scroll-to-top svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--text);
+            transition: transform 0.3s ease;
+        }
+
+        .scroll-to-top:hover svg {
+            transform: translateY(-5px);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideInLeft {
+            from { transform: translateX(-50px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(50px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 1s ease-out;
+        }
+
+        .animate-slide-in-left {
+            animation: slideInLeft 1s ease-out;
+        }
+
+        .animate-slide-in-right {
+            animation: slideInRight 1s ease-out;
+        }
+
+        .animate-scale-in {
+            animation: scaleIn 1s ease-out;
+        }
+
+        /* Tooltip Styles */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 120px;
+            background-color: var(--background);
+            color: var(--text);
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -60px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: var(--background);
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid var(--accent);
+            width: 80%;
+            max-width: 500px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+            animation: scaleIn 0.3s ease-out;
+        }
+
+        .close {
+            color: var(--text-muted);
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: var(--accent);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Accordion Styles */
+        .accordion {
+            max-width: 800px;
+            margin: 2rem auto;
+        }
+
+        .accordion-item {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+
+        .accordion-header {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .accordion-header:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .accordion-content-inner {
+            padding: 1rem;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            position: fixed;
+            top: var(--header-height);
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background-color: rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--accent);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Parallax Effect */
+        .parallax {
+            background-attachment: fixed;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .parallax-content {
+            background-color: rgba(13, 17, 23, 0.7);
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        /* Testimonials Slider */
+        .testimonials {
+            padding: 5rem 2rem;
+            background: linear-gradient(to bottom, var(--background), var(--background));
+        }
+
+        .testimonial-slider {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .testimonial-slide {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            display: none;
+        }
+
+        .testimonial-slide.active {
+            display: block;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .testimonial-author {
+            font-weight: bold;
+            color: var(--accent);
+            margin-top: 1rem;
+        }
+
+        .testimonial-nav {
+            display: flex;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .testimonial-nav button {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin: 0 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .testimonial-nav button.active {
+            background-color: var(--accent);
+        }
+
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: calc(var(--header-height) + 20px);
+            right: 20px;
+            background-color: var(--accent);
+            color: var(--background);
+            padding: 1rem;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+            z-index: 2000;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--background);
+                }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4D9FFF;
+        }
+    </style>
+</head>
+<body>
+   <!-- Custom Cursor -->
+   <div class="custom-cursor"></div>
+
+   <!-- Loading Screen -->
+   <div class="loader">
+       <div class="loader-content"></div>
+   </div>
+
+   <!-- Progress Bar -->
+   <div class="progress-container">
+       <div class="progress-bar"></div>
+   </div>
+
+   <!-- Header -->
+   <header>
+       <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bob-BchySanQ59CdDcwUTjbX5anOIAH84f.webp" alt="bob logo" class="logo">
+       <nav class="nav-desktop">
+           <a href="#features">Features</a>
+           <a href="#how-it-works">How It Works</a>
+           <a href="#stats">Stats</a>
+           <a href="#partners">Our Partners</a>
+           <a href="#contact">Contact Us</a>
+           <a href="#download" class="download-btn">Download App</a>
+       </nav>
+       <div class="menu-toggle">☰</div>
+   </header>
+
+   <!-- Sidebar -->
+   <div class="sidebar">
+       <div class="sidebar-close">×</div>
+       <nav class="sidebar-nav">
+           <a href="#features"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Features</a>
+           <a href="#how-it-works"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>How It Works</a>
+           <a href="#stats"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 20V10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 20V4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 20V14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Stats</a>
+           <a href="#partners"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 11C11.2091 11 13 9.20914 13 7C13 4.79086 11.2091 3 9 3C6.79086 3 5 4.79086 5 7C5 9.20914 6.79086 11 9 11Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55232C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89318 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Our Partners</a>
+           <a href="#contact"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 6L12 13L2 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Contact Us</a>
+           <a href="#download" class="download-btn"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 10L12 15L17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 15V3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Download App</a>
+       </nav>
+   </div>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Fast. Efficient.<br>Affordable.</h1>
+            <p>Discover the best deal for your next ride</p>
+            <div class="cta-buttons">
+                <button class="primary-btn">Download App</button>
+                <button class="secondary-btn">Learn More</button>
+            </div>
+        </div>
+        <div class="vehicles-container">
+            <div class="grid-floor"></div>
+        </div>
+        <div class="floating-elements">
+            <div class="floating-element" style="width: 50px; height: 50px; top: 20%; left: 10%;"></div>
+            <div class="floating-element" style="width: 30px; height: 30px; top: 60%; right: 15%;"></div>
+            <div class="floating-element" style="width: 40px; height: 40px; bottom: 30%; left: 20%;"></div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <h2 class="section-title">Why Choose bob?</h2>
+        <div class="features-grid">
+            <div class="feature-card animate-fade-in">
+                <div class="feature-icon">🔄</div>
+                <h3>No App Switching</h3>
+                <p>Compare all ride options in one place</p>
+            </div>
+            <div class="feature-card animate-fade-in" style="animation-delay: 0.2s;">
+                <div class="feature-icon">💰</div>
+                <h3>Best Prices</h3>
+                <p>Find the most affordable rides instantly</p>
+            </div>
+            <div class="feature-card animate-fade-in" style="animation-delay: 0.4s;">
+                <div class="feature-icon">🚀</div>
+                <h3>Time-Saving</h3>
+                <p>Quick and easy ride comparisons</p>
+            </div>
+            <div class="feature-card animate-fade-in" style="animation-delay: 0.6s;">
+                <div class="feature-icon">⚡</div>
+                <h3>Real-Time Updates</h3>
+                <p>Get live pricing and availability</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="how-it-works">
+        <h2 class="section-title">How It Works</h2>
+        <div class="steps-container">
+            <div class="step-card animate-slide-in-left">
+                <div class="step-number">1</div>
+                <h3>Download App</h3>
+                <p>Get bob on your device</p>
+            </div>
+            <div class="step-card animate-slide-in-left" style="animation-delay: 0.2s;">
+                <div class="step-number">2</div>
+                <h3>Enter Destination</h3>
+                <p>Tell us where you're going</p>
+            </div>
+            <div class="step-card animate-slide-in-left" style="animation-delay: 0.4s;">
+                <div class="step-number">3</div>
+                <h3>Compare Prices</h3>
+                <p>See all available options</p>
+            </div>
+            <div class="step-card animate-slide-in-left" style="animation-delay: 0.6s;">
+                <div class="step-number">4</div>
+                <h3>Choose Ride</h3>
+                <p>Select your preferred option</p>
+            </div>
+            <div class="step-card animate-slide-in-left" style="animation-delay: 0.8s;">
+                <div class="step-number">5</div>
+                <h3>Enjoy Journey</h3>
+                <p>Sit back and relax</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section id="stats" class="stats">
+        <h2 class="section-title">Our Impact</h2>
+        <div class="stats-grid">
+            <div class="stat-card animate-scale-in">
+                <div class="stat-number">70%</div>
+                <p>of urban Indian commuters use ride-sharing apps regularly</p>
+            </div>
+            <div class="stat-card animate-scale-in" style="animation-delay: 0.2s;">
+                <div class="stat-number">68%</div>
+                <p>of Indian users expressed frustration with comparing prices</p>
+            </div>
+            <div class="stat-card animate-scale-in" style="animation-delay: 0.4s;">
+                <div class="stat-number">60%</div>
+                <p>of urban commuters face difficulties in choosing the best ride option</p>
+            </div>
+            <div class="stat-card animate-scale-in" style="animation-delay: 0.6s;">
+                <div class="stat-number">75%</div>
+                <p>of Indian consumers prefer using integrated apps</p>
+            </div>
+            <div class="stat-card animate-scale-in" style="animation-delay: 0.8s;">
+                <div class="stat-number">82%</div>
+                <p>of Indian urban commuters are open to adopting new technology</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Partners Section -->
+    <section id="partners" class="partners">
+        <h2 class="section-title">Our Partners</h2>
+        <div class="partners-grid">
+            <div class="partner-logo animate-fade-in">
+                <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/partner1-Hy5Ue5Ue5Ue5Ue5Ue5Ue5Ue5Ue5Ue5.png" alt="Partner 1">
+            </div>
+            <div class="partner-logo animate-fade-in" style="animation-delay: 0.2s;">
+                <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/partner2-Hy5Ue5Ue5Ue5Ue5Ue5Ue5Ue5Ue5Ue5.png" alt="Partner 2">
+            </div>
+            <div class="partner-logo animate-fade-in" style="animation-delay: 0.4s;">
+                <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/partner3-Hy5Ue5Ue5Ue5Ue5Ue5Ue5Ue5Ue5Ue5.png" alt="Partner 3">
+            </div>
+            <div class="partner-logo animate-fade-in" style="animation-delay: 0.6s;">
+                <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/partner4-Hy5Ue5Ue5Ue5Ue5Ue5Ue5Ue5Ue5Ue5.png" alt="Partner 4">
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="testimonials">
+        <h2 class="section-title">What Our Users Say</h2>
+        <div class="testimonial-slider">
+            <div class="testimonial-slide active">
+                <p>"bob has revolutionized the way I commute. It's so easy to find the best deal now!"</p>
+                <p class="testimonial-author">- Priya S., Mumbai</p>
+            </div>
+            <div class="testimonial-slide">
+                <p>"I save both time and money with bob. It's a game-changer for urban commuters."</p>
+                <p class="testimonial-author">- Rahul K., Delhi</p>
+            </div>
+            <div class="testimonial-slide">
+                <p>"The real-time updates and price comparisons are incredibly helpful. Highly recommended!"</p>
+                <p class="testimonial-author">- Anita R., Bangalore</p>
+            </div>
+            <div class="testimonial-nav">
+                <button class="active"></button>
+                <button></button>
+                <button></button>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq">
+        <h2 class="section-title">Frequently Asked Questions</h2>
+        <div class="accordion">
+            <div class="accordion-item">
+                <div class="accordion-header">
+                    <h3>How does bob work?</h3>
+                    <span class="accordion-icon">+</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner">
+                        <p>bob aggregates ride prices from various providers, allowing you to compare and choose the best option for your journey. Simply enter your destination, and bob will show you all available rides and their prices.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <div class="accordion-header">
+                    <h3>Is bob available in my city?</h3>
+                    <span class="accordion-icon">+</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner">
+                        <p>bob is currently available in major Indian cities including Mumbai, Delhi, Bangalore, Hyderabad, and Chennai. We're rapidly expanding to other cities as well. Check our app for the most up-to-date availability.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <div class="accordion-header">
+                    <h3>How accurate are the prices shown on bob?</h3>
+                    <span class="accordion-icon">+</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner">
+                        <p>bob fetches real-time prices directly from our partner ride-sharing services. While we strive for 100% accuracy, prices may occasionally vary slightly due to real-time fluctuations. The final price is always confirmed before you book your ride.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact">
+        <div class="footer-grid">
+            <div class="footer-column">
+                <h3>Company</h3>
+                <ul>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Careers</a></li>
+                    <li><a href="#">Press</a></li>
+                    <li><a href="#">Blog</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h3>Product</h3>
+                <ul>
+                    <li><a href="#">Features</a></li>
+                    <li><a href="#">Pricing</a></li>
+                    <li><a href="#">Support</a></li>
+                    <li><a href="#">FAQs</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h3>Resources</h3>
+                <ul>
+                    <li><a href="#">Documentation</a></li>
+                    <li><a href="#">Tutorials</a></li>
+                    <li><a href="#">API</a></li>
+                    <li><a href="#">Community</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h3>Connect</h3>
+                <ul>
+                    <li><a href="#">Twitter</a></li>
+                    <li><a href="#">Facebook</a></li>
+                    <li><a href="#">LinkedIn</a></li>
+                    <li><a href="#">Instagram</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h3>Stay Updated</h3>
+                <p>Subscribe to our newsletter for the latest updates and offers.</p>
+                <form class="newsletter-form">
+                    <input type="email" placeholder="Enter your email" required>
+                    <button type="submit">Subscribe</button>
+                </form>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 bob. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Dark Mode Toggle -->
+    <div class="dark-mode-toggle" aria-label="Toggle dark mode">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+    </div>
+
+    <!-- Scroll to Top Button -->
+    <div class="scroll-to-top" aria-label="Scroll to top">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+    </div>
+
+
+    <!-- Notification -->
+    <div class="notification">
+        This is a notification message.
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Welcome to bob!</h2>
+            <p>Experience the future of ride-sharing with bob. Compare prices, save time, and enjoy your journey.</p>
+            <button class="primary-btn">Get Started</button>
+        </div>
+    </div>
+
+    <script>
+        // Custom Cursor
+        const cursor = document.querySelector('.custom-cursor');
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+
+        // Loading Screen
+        window.addEventListener('load', () => {
+            const loader = document.querySelector('.loader');
+            loader.classList.add('hidden');
+        });
+
+        // Sidebar Functionality
+        const menuToggle = document.querySelector('.menu-toggle');
+        const sidebar = document.querySelector('.sidebar');
+        const sidebarClose = document.querySelector('.sidebar-close');
+
+        function openSidebar() {
+            sidebar.classList.add('active');
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('active');
+        }
+
+        menuToggle.addEventListener('click', openSidebar);
+        sidebarClose.addEventListener('click', closeSidebar);
+
+        // Close sidebar when clicking outside
+        document.addEventListener('click', (e) => {
+            if (sidebar.classList.contains('active') && 
+                !sidebar.contains(e.target) && 
+                !menuToggle.contains(e.target)) {
+                closeSidebar();
+            }
+        });
+
+        // Dark Mode Toggle
+        const darkModeToggle = document.querySelector('.dark-mode-toggle');
+        darkModeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('light-mode');
+        });
+
+        // Scroll to Top Button
+        const scrollToTopBtn = document.querySelector('.scroll-to-top');
+        window.addEventListener('scroll', () => {
+            if (window.pageYOffset > 100) {
+                scrollToTopBtn.classList.add('visible');
+            } else {
+                scrollToTopBtn.classList.remove('visible');
+            }
+        });
+
+        scrollToTopBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Progress Bar
+        window.addEventListener('scroll', () => {
+            const windowHeight = window.innerHeight;
+            const documentHeight = document.documentElement.scrollHeight;
+            const scrollTop = window.pageYOffset;
+            const scrollPercentage = (scrollTop / (documentHeight - windowHeight)) * 100;
+            document.querySelector('.progress-bar').style.width = scrollPercentage + '%';
+        });
+
+        // Animated Vehicle Icons
+        const vehiclesContainer = document.querySelector('.vehicles-container');
+        const vehicleIcons = ['🚗', '🚕', '🚙', '🏍️', '🛵'];
+
+        function createVehicle() {
+            const vehicle = document.createElement('div');
+            vehicle.classList.add('vehicle');
+            vehicle.textContent = vehicleIcons[Math.floor(Math.random() * vehicleIcons.length)];
+            vehicle.style.bottom = Math.random() * 40 + 'vh';
+            vehicle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+            vehiclesContainer.appendChild(vehicle);
+
+            vehicle.addEventListener('animationend', () => {
+                vehicle.remove();
+            });
+        }
+
+        setInterval(createVehicle, 2000);
+
+        // Testimonial Slider
+        const testimonialSlides = document.querySelectorAll('.testimonial-slide');
+        const testimonialNavButtons = document.querySelectorAll('.testimonial-nav button');
+        let currentSlide = 0;
+
+        function showSlide(index) {
+            testimonialSlides.forEach(slide => slide.classList.remove('active'));
+            testimonialNavButtons.forEach(button => button.classList.remove('active'));
+            testimonialSlides[index].classList.add('active');
+            testimonialNavButtons[index].classList.add('active');
+        }
+
+        testimonialNavButtons.forEach((button, index) => {
+            button.addEventListener('click', () => {
+                currentSlide = index;
+                showSlide(currentSlide);
+            });
+        });
+
+        setInterval(() => {
+            currentSlide = (currentSlide + 1) % testimonialSlides.length;
+            showSlide(currentSlide);
+        }, 5000);
+
+
+        // Notification
+        function showNotification(message) {
+            const notification = document.querySelector('.notification');
+            notification.textContent = message;
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Example usage:
+        // showNotification('Welcome to bob!');
+
+        // Modal
+        const modal = document.getElementById('modal');
+        const closeModal = document.querySelector('.close');
+
+        // Open modal (you can trigger this when needed)
+        function openModal() {
+            modal.style.display = 'block';
+        }
+
+        closeModal.onclick = function() {
+            modal.style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Accordion
+        const accordionHeaders = document.querySelectorAll('.accordion-header');
+
+        accordionHeaders.forEach(header => {
+            header.addEventListener('click', () => {
+                const accordionItem = header.parentElement;
+                const accordionContent = accordionItem.querySelector('.accordion-content');
+                const accordionIcon = header.querySelector('.accordion-icon');
+
+                accordionItem.classList.toggle('active');
+                
+                if (accordionItem.classList.contains('active')) {
+                    accordionContent.style.maxHeight = accordionContent.scrollHeight + 'px';
+                    accordionIcon.textContent = '-';
+                } else {
+                    accordionContent.style.maxHeight = '0';
+                    accordionIcon.textContent = '+';
+                }
+            });
+        });
+
+        // Intersection Observer for animations
+        const animatedElements = document.querySelectorAll('.animate-fade-in, .animate-slide-in-left, .animate-slide-in-right, .animate-scale-in');
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animationPlayState = 'running';
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1 });
+
+        animatedElements.forEach(element => {
+            element.style.animationPlayState = 'paused';
+            observer.observe(element);
+        });
+
+        // Newsletter Form Submission
+        const newsletterForm = document.querySelector('.newsletter-form');
+        newsletterForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = e.target.querySelector('input[type="email"]').value;
+            //console.log('Newsletter subscription for:', email);
+            showNotification('Thanks for subscribing!');
+            e.target.reset();
+        });
+
+        // Smooth Scrolling for Anchor Links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Example of opening the modal on page load (you can adjust this as needed)
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                openModal();
+            }, 5000); // Open modal after 5 seconds
+        });
+    </script>
+</body>
+</html>
