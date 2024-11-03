@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>bob - Smart Ride Comparison</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
         :root {
             --primary: #ffffff;
             --background: #0a0a0a;
@@ -270,8 +272,8 @@
             color: var(--accent);
         }
 
-        /* Vehicle Animation Styles */
-        .vehicles-container {
+         /* Updated Vehicle Animation Styles */
+         .vehicles-container {
             position: absolute;
             bottom: 0;
             left: 0;
@@ -280,6 +282,7 @@
             perspective: 1000px;
             transform-style: preserve-3d;
             z-index: 1;
+            overflow: hidden;
         }
 
         .vehicle {
@@ -572,7 +575,22 @@
             gap: 0.5rem;
             margin-top: 1rem;
         }
+      /* Footer Icon Styles */
+      .footer-social-icons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
 
+        .footer-social-icons a {
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .footer-social-icons a:hover {
+            color: var(--accent);
+        }
         .newsletter-form input {
             padding: 0.5rem 1rem;
             border: none;
@@ -851,16 +869,43 @@
             backdrop-filter: blur(5px);
         }
 
+        /* Updated Modal Styles */
         .modal-content {
             background-color: var(--background);
             margin: 15% auto;
-            padding: 20px;
+            padding: 2rem;
             border: 1px solid var(--accent);
-            width: 80%;
+            width: 90%;
             max-width: 500px;
             border-radius: 15px;
             box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
             animation: scaleIn 0.3s ease-out;
+        }
+
+        .modal-content h2 {
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+
+        .modal-content p {
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-content .primary-btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(45deg, var(--accent), #4D9FFF);
+            color: var(--primary);
+            border: none;
+            border-radius: 5px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .modal-content .primary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 255, 255, 0.3);
         }
 
         .close {
@@ -1307,12 +1352,12 @@
             </div>
             <div class="footer-column">
                 <h3>Connect</h3>
-                <ul>
-                    <li><a href="#">Twitter</a></li>
-                    <li><a href="#">Facebook</a></li>
-                    <li><a href="#">LinkedIn</a></li>
-                    <li><a href="#">Instagram</a></li>
-                </ul>
+                <div class="footer-social-icons">
+                    <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                </div>
             </div>
             <div class="footer-column">
                 <h3>Stay Updated</h3>
@@ -1350,9 +1395,10 @@
             <span class="close">&times;</span>
             <h2>Welcome to bob!</h2>
             <p>Experience the future of ride-sharing with bob. Compare prices, save time, and enjoy your journey.</p>
-            <button class="primary-btn">Get Started</button>
+            <a href="#" class="primary-btn">Get Started</a>
         </div>
     </div>
+
 
     <script>
         // Custom Cursor
@@ -1422,16 +1468,18 @@
             document.querySelector('.progress-bar').style.width = scrollPercentage + '%';
         });
 
-        // Animated Vehicle Icons
-        const vehiclesContainer = document.querySelector('.vehicles-container');
+       // Updated Vehicle Animation
+       const vehiclesContainer = document.querySelector('.vehicles-container');
         const vehicleIcons = ['🚗', '🚕', '🚙', '🏍️', '🛵'];
 
         function createVehicle() {
             const vehicle = document.createElement('div');
             vehicle.classList.add('vehicle');
             vehicle.textContent = vehicleIcons[Math.floor(Math.random() * vehicleIcons.length)];
-            vehicle.style.bottom = Math.random() * 40 + 'vh';
-            vehicle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+            // Limit the bottom position to stay within the grid
+            vehicle.style.bottom = (Math.random() * 30 + 5) + 'vh'; // 5-35vh
+            vehicle.style.animationDuration = (Math.random() * 5 + 8) + 's'; // 8-13s
+            vehicle.style.zIndex = Math.floor(Math.random() * 10); // Random z-index to prevent visual overlapping
             vehiclesContainer.appendChild(vehicle);
 
             vehicle.addEventListener('animationend', () => {
