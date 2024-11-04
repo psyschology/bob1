@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image to Text Converter with Robust Error Handling</title>
+    <script src="https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        #imagePreview {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 20px;
+        }
+        #output, #debugOutput {
+            width: 100%;
+            height: 150px;
+            margin-bottom: 20px;
+        }
+        #debugOutput {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            padding: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        #retryButton {
+            display: none;
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Image to Text Converter with Robust Error Handling</h1>
+        <input type="file" id="fileInput" accept="image/*">
+        <img id="imagePreview" src="" alt="Preview">
+        <h2>Extracted Text:</h2>
+        <textarea id="output" readonly></textarea>
+        <h2>Debug Information:</h2>
+        <div id="debugOutput"></div>
+        <button id="retryButton">Retry Processing</button>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const output = document.getElementById('output');
+        const debugOutput = document.getElementById('debugOutput');
+        const retryButton = document.getElementById('retryButton');
+        let currentImageData = null;
+
+        function log(message) {
+            debugOutput.textContent += message + '\n';
+            console.log(message);
+        }
+
+        function clearLog() {
+            debugOutput.textContent = '';
+        }
+
+        fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+        retryButton.addEventListener('click', () => {
+            if (currentImageData) {
+                clearLog();
+                extractText(currentImageData);
+            }
+        });
+
+        function handleFile(file) {
+            if (file) {
+                clearLog();
+                log(`File selected: ${file.name} (${file.type})`);
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imagePreview.src = e.target.result;
+                    currentImageData = e.target.result;
+                    log('Image preview loaded');
+                    extractText(e.target.result);
+                };
+                reader.onerror = (e) => {
+                    log(`Error reading file: ${e.target.error}`);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function extractText(imageData) {
+            try {
+                output.value = 'Processing image...';
+                retryButton.style.display = 'none';
+                log('Starting Tesseract worker');
+                const worker = await Tesseract.createWorker({
+                    logger: m => log(`Tesseract: ${m.status} (${Math.floor(m.progress * 100)}%)`)
+                });
+                log('Worker created');
+                
+                log('Loading language');
+                await worker.loadLanguage('eng');
+                log('Language loaded');
+                
+                log('Initializing worker');
+                await worker.initialize('eng');
+                log('Worker initialized');
+                
+                log('Recognizing text');
+                const { data: { text } } = await worker.recognize(imageData);
+                log('Text recognized');
+                
+                await worker.terminate();
+                log('Worker terminated');
+                
+                output.value = text || 'No text was recognized in the image.';
+                log('Process completed successfully');
+            } catch (error) {
+                console.error('Error processing image:', error);
+                log(`Error: ${error.message}`);
+                output.value = 'An error occurred while processing the image. Please check the debug information and try again.';
+                retryButton.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>
