@@ -3,147 +3,425 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image to Text Converter with Robust Error Handling</title>
+    <title>Canva to HTML Converter Deluxe</title>
     <script src="https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+        :root {
+            --primary-color: #6C63FF;
+            --secondary-color: #4CAF50;
+            --background-color: #1a1a2e;
+            --text-color: #ffffff;
+            --card-bg: #16213e;
+        }
+
+        * {
             margin: 0;
-            padding: 20px;
-            background-color: #f4f4f4;
+            padding: 0;
+            box-sizing: border-box;
         }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+        }
+
         .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 1200px;
+            padding: 2rem;
         }
-        h1, h2 {
-            color: #333;
+
+        h1 {
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 5s ease infinite;
         }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .upload-area {
+            background-color: var(--card-bg);
+            border: 2px dashed var(--primary-color);
+            border-radius: 1rem;
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 20px rgba(108, 99, 255, 0.5);
+        }
+
+        .upload-area::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(108, 99, 255, 0.1) 0%, rgba(108, 99, 255, 0) 70%);
+            transform: scale(0);
+            transition: transform 0.6s ease-out;
+        }
+
+        .upload-area:hover::before {
+            transform: scale(1);
+        }
+
+        .upload-area p {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .preview-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .preview-card {
+            background-color: var(--card-bg);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .preview-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .preview-card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
         #imagePreview {
             max-width: 100%;
             height: auto;
-            margin-bottom: 20px;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        #output, #debugOutput {
+
+        #livePreview {
+            background-color: #ffffff;
+            color: #000000;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            height: 300px;
+            overflow: auto;
+        }
+
+        .code-output {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        textarea {
             width: 100%;
-            height: 150px;
-            margin-bottom: 20px;
+            height: 200px;
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--primary-color);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
         }
-        #debugOutput {
-            background-color: #f8f8f8;
-            border: 1px solid #ddd;
-            padding: 10px;
-            font-family: monospace;
-            white-space: pre-wrap;
-        }
-        #retryButton {
-            display: none;
-            background-color: #4CAF50;
+
+        .button {
+            background-color: var(--primary-color);
+            color: var(--text-color);
             border: none;
-            color: white;
-            padding: 15px 32px;
-            text-align: center;
-            text-decoration: none;
-            font-size: 16px;
-            margin: 4px 2px;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 2rem;
             cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 2rem;
+            display: inline-block;
+        }
+
+        .button:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+        }
+
+        #loading {
+            display: none;
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--primary-color);
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            padding: 1rem 2rem;
+            border-radius: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: translateX(150%);
+            transition: transform 0.3s ease-out;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        @media (max-width: 768px) {
+            .preview-container, .code-output {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Image to Text Converter with Robust Error Handling</h1>
-        <input type="file" id="fileInput" accept="image/*">
-        <img id="imagePreview" src="" alt="Preview">
-        <h2>Extracted Text:</h2>
-        <textarea id="output" readonly></textarea>
-        <h2>Debug Information:</h2>
-        <div id="debugOutput"></div>
-        <button id="retryButton">Retry Processing</button>
+        <h1>Canva to HTML Converter Deluxe</h1>
+        <div id="uploadArea" class="upload-area">
+            <p>Drag and drop your image here or click to select a file</p>
+            <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.webp">
+        </div>
+        <div class="preview-container">
+            <div class="preview-card">
+                <h2>Image Preview</h2>
+                <img id="imagePreview" src="" alt="Preview">
+            </div>
+            <div class="preview-card">
+                <h2>Live Preview</h2>
+                <div id="livePreview"></div>
+            </div>
+        </div>
+        <div class="code-output">
+            <div>
+                <h2>Generated HTML</h2>
+                <textarea id="htmlOutput" readonly></textarea>
+            </div>
+            <div>
+                <h2>Generated CSS</h2>
+                <textarea id="cssOutput" readonly></textarea>
+            </div>
+        </div>
+        <button id="downloadBtn" class="button">Download Code</button>
+        <div id="loading">
+            <div class="loader"></div>
+            <p>Processing image... Please wait.</p>
+        </div>
     </div>
+    <div class="notification" id="notification"></div>
 
     <script>
+        const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
         const imagePreview = document.getElementById('imagePreview');
-        const output = document.getElementById('output');
-        const debugOutput = document.getElementById('debugOutput');
-        const retryButton = document.getElementById('retryButton');
-        let currentImageData = null;
+        const htmlOutput = document.getElementById('htmlOutput');
+        const cssOutput = document.getElementById('cssOutput');
+        const livePreview = document.getElementById('livePreview');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const loading = document.getElementById('loading');
+        const notification = document.getElementById('notification');
 
-        function log(message) {
-            debugOutput.textContent += message + '\n';
-            console.log(message);
-        }
-
-        function clearLog() {
-            debugOutput.textContent = '';
-        }
-
-        fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
-        retryButton.addEventListener('click', () => {
-            if (currentImageData) {
-                clearLog();
-                extractText(currentImageData);
-            }
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = 'var(--secondary-color)';
         });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.borderColor = 'var(--primary-color)';
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = 'var(--primary-color)';
+            handleFile(e.dataTransfer.files[0]);
+        });
+        fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
 
         function handleFile(file) {
             if (file) {
-                clearLog();
-                log(`File selected: ${file.name} (${file.type})`);
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     imagePreview.src = e.target.result;
-                    currentImageData = e.target.result;
-                    log('Image preview loaded');
-                    extractText(e.target.result);
-                };
-                reader.onerror = (e) => {
-                    log(`Error reading file: ${e.target.error}`);
+                    extractTextAndGenerateCode(e.target.result);
                 };
                 reader.readAsDataURL(file);
             }
         }
 
-        async function extractText(imageData) {
+        async function extractTextAndGenerateCode(imageData) {
+            loading.style.display = 'block';
             try {
-                output.value = 'Processing image...';
-                retryButton.style.display = 'none';
-                log('Starting Tesseract worker');
-                const worker = await Tesseract.createWorker({
-                    logger: m => log(`Tesseract: ${m.status} (${Math.floor(m.progress * 100)}%)`)
+                const { data: { text } } = await Tesseract.recognize(imageData, 'eng', {
+                    logger: m => console.log(m)
                 });
-                log('Worker created');
+                const lines = text.split('\n').filter(line => line.trim() !== '');
                 
-                log('Loading language');
-                await worker.loadLanguage('eng');
-                log('Language loaded');
-                
-                log('Initializing worker');
-                await worker.initialize('eng');
-                log('Worker initialized');
-                
-                log('Recognizing text');
-                const { data: { text } } = await worker.recognize(imageData);
-                log('Text recognized');
-                
-                await worker.terminate();
-                log('Worker terminated');
-                
-                output.value = text || 'No text was recognized in the image.';
-                log('Process completed successfully');
+                let htmlCode = '<div class="canva-design">\n';
+                let cssCode = '.canva-design {\n  font-family: "Poppins", sans-serif;\n  color: #333333;\n}\n';
+
+                lines.forEach((line, index) => {
+                    const className = `line-${index}`;
+                    htmlCode += `  <p class="${className}">${line}</p>\n`;
+                    cssCode += `.${className} {\n  margin-bottom: 1rem;\n  font-size: ${16 + Math.floor(Math.random() * 8)}px;\n}\n`;
+                });
+
+                htmlCode += '</div>';
+
+                htmlOutput.value = htmlCode;
+                cssOutput.value = cssCode;
+                updateLivePreview(htmlCode, cssCode);
+                showNotification('Code generated successfully!');
             } catch (error) {
                 console.error('Error processing image:', error);
-                log(`Error: ${error.message}`);
-                output.value = 'An error occurred while processing the image. Please check the debug information and try again.';
-                retryButton.style.display = 'block';
+                showNotification('Error processing image. Please try again.', 'error');
+            } finally {
+                loading.style.display = 'none';
             }
         }
+
+        function updateLivePreview(html, css) {
+            livePreview.innerHTML = `<style>${css}</style>${html}`;
+        }
+
+        downloadBtn.addEventListener('click', () => {
+            const htmlContent = htmlOutput.value;
+            const cssContent = cssOutput.value;
+            const combinedContent = `HTML:\n\n${htmlContent}\n\nCSS:\n\n${cssContent}`;
+            const blob = new Blob([combinedContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'canva_to_html.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showNotification('Code downloaded successfully!');
+        });
+
+        function showNotification(message, type = 'success') {
+            notification.textContent = message;
+            notification.style.backgroundColor = type === 'success' ? 'var(--secondary-color)' : '#ff4d4d';
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Particle animation
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        document.body.appendChild(canvas);
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        canvas.style.position = 'fixed';
+        canvas.style.top = '0';
+        canvas.style.left = '0';
+        canvas.style.zIndex = '-1';
+
+        const particles = [];
+        const particleCount = 50;
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 5 + 1;
+                this.speedX = Math.random() * 3 - 1.5;
+                this.speedY = Math.random() * 3 - 1.5;
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                if (this.size > 0.2) this.size -= 0.1;
+
+                if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+            }
+
+            draw() {
+                ctx.fillStyle = 'rgba(108, 99, 255, 0.5)';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+            }
+            
+            requestAnimationFrame(animateParticles);
+        }
+
+        initParticles();
+        animateParticles();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
     </script>
 </body>
 </html>
